@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:form_validationapp/src/providers/provider.dart';
+import 'package:form_validationapp/src/services/auth_service.dart';
 import 'package:form_validationapp/src/ui/input_decorations.dart';
-import 'package:form_validationapp/src/widgets/auth_background_widget.dart';
 import 'package:form_validationapp/src/widgets/widgets.dart';
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
-
+class RegisterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +18,8 @@ class LoginScreen extends StatelessWidget {
               child: Column(
             children: [
               const SizedBox(height: 10),
-              Text('Login', style: Theme.of(context).textTheme.headline4),
+              Text('Crear cuenta',
+                  style: Theme.of(context).textTheme.headline4),
               const SizedBox(height: 30),
               ChangeNotifierProvider(
                   create: (_) => LoginFormProvider(), child: _LoginForm())
@@ -28,13 +27,15 @@ class LoginScreen extends StatelessWidget {
           )),
           const SizedBox(height: 50),
           TextButton(
-                onPressed: () => Navigator.pushReplacementNamed(context, 'register'), 
-                style: ButtonStyle(
-                  overlayColor: MaterialStateProperty.all( Colors.indigo.withOpacity(0.1)),
-                  shape: MaterialStateProperty.all( const StadiumBorder() )
-                ),
-                child:const  Text('Crear una nueva cuenta', style: TextStyle( fontSize: 18, color: Colors.black87 ),)
-              ),
+              onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
+              style: ButtonStyle(
+                  overlayColor:
+                      MaterialStateProperty.all(Colors.indigo.withOpacity(0.1)),
+                  shape: MaterialStateProperty.all(StadiumBorder())),
+              child: const Text(
+                '¿Ya tienes una cuenta?',
+                style: TextStyle(fontSize: 18, color: Colors.black87),
+              )),
           const SizedBox(height: 50),
         ],
       ),
@@ -87,7 +88,7 @@ class _LoginForm extends StatelessWidget {
                     : 'La contraseña debe de ser de 6 caracteres';
               },
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             MaterialButton(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -95,26 +96,34 @@ class _LoginForm extends StatelessWidget {
                 elevation: 0,
                 color: Colors.deepPurple,
                 child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 80, vertical: 15),
                     child: Text(
                       loginForm.isLoading ? 'Espere' : 'Ingresar',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     )),
                 onPressed: loginForm.isLoading
                     ? null
                     : () async {
                         FocusScope.of(context).unfocus();
+                        final authService =
+                            Provider.of<AuthService>(context, listen: false);
 
                         if (!loginForm.isValidForm()) return;
 
                         loginForm.isLoading = true;
 
-                        await Future.delayed(Duration(seconds: 2));
-
                         // TODO: validar si el login es correcto
-                        loginForm.isLoading = false;
+                        final String? errorMessage = await authService
+                            .createUser(loginForm.email, loginForm.password);
 
-                        Navigator.pushReplacementNamed(context, 'home');
+                        if (errorMessage == null) {
+                          Navigator.pushReplacementNamed(context, 'home');
+                        } else {
+                          // TODO: mostrar error en pantalla
+                          print(errorMessage);
+                          loginForm.isLoading = false;
+                        }
                       })
           ],
         ),
